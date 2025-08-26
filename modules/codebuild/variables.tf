@@ -17,3 +17,8 @@ variable "ecr_repository_arn" {
   description = "ECR repository ARN"
   type        = string
 }
+
+variable "github_token_arn" {
+  description = "GitHub token secret ARN"
+  type        = string
+}

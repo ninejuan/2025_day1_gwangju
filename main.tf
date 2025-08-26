@@ -149,7 +149,8 @@ module "codebuild_red" {
   app_name           = "red"
   ecr_repository_url = module.ecr.repository_urls["red"]
   ecr_repository_arn = module.ecr.repository_arns["red"]
-  depends_on         = [module.ecr]
+  github_token_arn   = module.github_token.secret_arn
+  depends_on         = [module.ecr, module.github_token]
 }
 
 # CodeBuild Green 모듈
@@ -160,39 +161,36 @@ module "codebuild_green" {
   app_name           = "green"
   ecr_repository_url = module.ecr.repository_urls["green"]
   ecr_repository_arn = module.ecr.repository_arns["green"]
-  depends_on         = [module.ecr]
+  github_token_arn   = module.github_token.secret_arn
+  depends_on         = [module.ecr, module.github_token]
 }
 
 # CodePipeline Red 모듈
 module "codepipeline_red" {
   source = "./modules/codepipeline"
 
-  project                 = var.project
-  app_name                = "red"
-  artifact_bucket_arn     = "arn:aws:s3:::${var.project}-red-artifacts-bucket"
-  codestar_connection_arn = var.codestar_connection_arn
-  repository_id           = var.repository_id
-  source_branch           = "app-red"
-  codebuild_project_name  = module.codebuild_red.codebuild_project_name
-  github_token            = var.github_token
-  github_username         = var.github_username
-  depends_on              = [module.codebuild_red]
+  project                = var.project
+  app_name               = "red"
+  artifact_bucket_arn    = "arn:aws:s3:::${var.project}-red-artifacts-bucket"
+  repository_id          = var.repository_id
+  source_branch          = "app-red"
+  codebuild_project_name = module.codebuild_red.codebuild_project_name
+  github_token           = var.github_token
+  depends_on             = [module.codebuild_red]
 }
 
 # CodePipeline Green 모듈
 module "codepipeline_green" {
   source = "./modules/codepipeline"
 
-  project                 = var.project
-  app_name                = "green"
-  artifact_bucket_arn     = "arn:aws:s3:::${var.project}-green-artifacts-bucket"
-  codestar_connection_arn = var.codestar_connection_arn
-  repository_id           = var.repository_id
-  source_branch           = "app-green"
-  codebuild_project_name  = module.codebuild_green.codebuild_project_name
-  github_token            = var.github_token
-  github_username         = var.github_username
-  depends_on              = [module.codebuild_green]
+  project                = var.project
+  app_name               = "green"
+  artifact_bucket_arn    = "arn:aws:s3:::${var.project}-green-artifacts-bucket"
+  repository_id          = var.repository_id
+  source_branch          = "app-green"
+  codebuild_project_name = module.codebuild_green.codebuild_project_name
+  github_token           = var.github_token
+  depends_on             = [module.codebuild_green]
 }
 
 # S3 모듈

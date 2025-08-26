@@ -27,12 +27,6 @@ variable "github_username" {
   type        = string
 }
 
-variable "codestar_connection_arn" {
-  description = "CodeStar connection ARN for GitHub"
-  type        = string
-  default     = ""
-}
-
 variable "repository_id" {
   description = "GitHub repository ID"
   type        = string

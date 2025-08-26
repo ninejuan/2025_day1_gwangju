@@ -13,11 +13,6 @@ variable "artifact_bucket_arn" {
   type        = string
 }
 
-variable "codestar_connection_arn" {
-  description = "CodeStar connection ARN"
-  type        = string
-}
-
 variable "repository_id" {
   description = "Repository ID"
   type        = string
@@ -35,10 +30,5 @@ variable "codebuild_project_name" {
 
 variable "github_token" {
   description = "GitHub token"
-  type        = string
-}
-
-variable "github_username" {
-  description = "GitHub username"
   type        = string
 }

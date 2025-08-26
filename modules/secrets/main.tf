@@ -14,7 +14,7 @@ resource "aws_kms_alias" "secrets" {
 }
 
 resource "aws_secretsmanager_secret" "main" {
-  name_prefix = "${var.secret_name}-"
+  name = var.secret_name
   kms_key_id = aws_kms_key.secrets.arn
   recovery_window_in_days = 0
 
