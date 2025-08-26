@@ -20,12 +20,12 @@ output "cluster_oidc_issuer_url" {
 
 output "cluster_security_group_id" {
   description = "EKS cluster security group ID"
-  value       = aws_security_group.eks_cluster.id
+  value       = aws_security_group.eks.id
 }
 
 output "node_group_security_group_id" {
   description = "EKS node group security group ID"
-  value       = aws_security_group.eks_node_group.id
+  value       = aws_security_group.eks.id
 }
 
 output "cluster_iam_role_arn" {

@@ -8,7 +8,7 @@ resource "aws_eks_cluster" "main" {
     subnet_ids              = var.private_subnet_ids
     endpoint_private_access = true
     endpoint_public_access  = true
-    security_group_ids      = [aws_security_group.eks_cluster.id]
+    security_group_ids      = [aws_security_group.eks.id]
   }
 
   enabled_cluster_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
@@ -70,33 +70,17 @@ resource "aws_kms_key" "eks" {
   }
 }
 
-# Security Group for EKS Cluster
-resource "aws_security_group" "eks_cluster" {
-  name_prefix = "${var.project}-eks-cluster-sg"
-  vpc_id      = var.vpc_id
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "${var.project}-eks-cluster-sg"
-  }
-}
-
-# Security Group for EKS Node Groups
-resource "aws_security_group" "eks_node_group" {
-  name_prefix = "${var.project}-eks-node-group-sg"
+# Security Group for EKS Cluster and Node Groups
+resource "aws_security_group" "eks" {
+  name_prefix = "${var.project}-eks-sg"
   vpc_id      = var.vpc_id
 
   ingress {
-    from_port       = 443
-    to_port         = 443
-    protocol        = "tcp"
-    security_groups = [aws_security_group.eks_cluster.id]
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    self        = true
+    description = "Allow EKS cluster and nodes to communicate"
   }
 
   egress {
@@ -107,7 +91,7 @@ resource "aws_security_group" "eks_node_group" {
   }
 
   tags = {
-    Name = "${var.project}-eks-node-group-sg"
+    Name = "${var.project}-eks-sg"
   }
 }
 
@@ -172,6 +156,24 @@ resource "aws_eks_node_group" "app" {
     aws_iam_role_policy_attachment.eks_cni_policy,
     aws_iam_role_policy_attachment.ec2_container_registry_read_only,
   ]
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      # Node Group이 완전히 생성될 때까지 대기
+      aws eks wait nodegroup-active --cluster-name ${aws_eks_cluster.main.name} --nodegroup-name ${var.project}-eks-app-nodegroup
+      
+      # Auto Scaling Group의 인스턴스들에 태그 설정
+      ASG_NAME=$(aws eks describe-nodegroup --cluster-name ${aws_eks_cluster.main.name} --nodegroup-name ${var.project}-eks-app-nodegroup --query 'nodegroup.resources.autoScalingGroups[0].name' --output text)
+      
+      if [ ! -z "$ASG_NAME" ] && [ "$ASG_NAME" != "None" ]; then
+        INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names $ASG_NAME --query 'AutoScalingGroups[0].Instances[].InstanceId' --output text)
+        
+        for INSTANCE_ID in $INSTANCE_IDS; do
+          aws ec2 create-tags --resources $INSTANCE_ID --tags Key=Name,Value=${var.project}-eks-app-node
+        done
+      fi
+    EOT
+  }
 }
 
 # Addon Node Group
@@ -207,15 +209,22 @@ resource "aws_eks_node_group" "addon" {
     aws_iam_role_policy_attachment.eks_cni_policy,
     aws_iam_role_policy_attachment.ec2_container_registry_read_only,
   ]
-}
 
-# Data source for EKS optimized AMI
-data "aws_ami" "eks_optimized" {
-  most_recent = true
-  owners      = ["amazon"]
-
-  filter {
-    name   = "name"
-    values = ["amazon-eks-node-${var.cluster_version}-v*"]
+  provisioner "local-exec" {
+    command = <<-EOT
+      # Node Group이 완전히 생성될 때까지 대기
+      aws eks wait nodegroup-active --cluster-name ${aws_eks_cluster.main.name} --nodegroup-name ${var.project}-eks-addon-nodegroup
+      
+      # Auto Scaling Group의 인스턴스들에 태그 설정
+      ASG_NAME=$(aws eks describe-nodegroup --cluster-name ${aws_eks_cluster.main.name} --nodegroup-name ${var.project}-eks-addon-nodegroup --query 'nodegroup.resources.autoScalingGroups[0].name' --output text)
+      
+      if [ ! -z "$ASG_NAME" ] && [ "$ASG_NAME" != "None" ]; then
+        INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names $ASG_NAME --query 'AutoScalingGroups[0].Instances[].InstanceId' --output text)
+        
+        for INSTANCE_ID in $INSTANCE_IDS; do
+          aws ec2 create-tags --resources $INSTANCE_ID --tags Key=Name,Value=${var.project}-eks-addon-node
+        done
+      fi
+    EOT
   }
 }

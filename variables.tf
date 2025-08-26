@@ -53,17 +53,17 @@ variable "subnet_cidr_blocks" {
   type        = map(map(string))
   default = {
     hub = {
-      public_a     = "10.0.0.0/24"
-      public_b     = "10.0.1.0/24"
-      private_a    = "10.0.2.0/24"
-      private_b    = "10.0.3.0/24"
-      firewall     = "10.0.4.0/24"
+      public_a  = "10.0.0.0/24"
+      public_b  = "10.0.1.0/24"
+      private_a = "10.0.2.0/24"
+      private_b = "10.0.3.0/24"
+      firewall  = "10.0.4.0/24"
     }
     app = {
-      private_a    = "192.168.0.0/24"
-      private_b    = "192.168.1.0/24"
-      data_a       = "192.168.2.0/24"
-      data_b       = "192.168.3.0/24"
+      private_a = "192.168.0.0/24"
+      private_b = "192.168.1.0/24"
+      data_a    = "192.168.2.0/24"
+      data_b    = "192.168.3.0/24"
     }
   }
 }
