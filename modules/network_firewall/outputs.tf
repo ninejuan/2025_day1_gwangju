@@ -16,9 +16,4 @@ output "policy_arn" {
 output "rule_group_arn" {
   description = "Network Firewall Rule Group ARN"
   value       = aws_networkfirewall_rule_group.suricata_rules.arn
-}
-
-output "firewall_route_table_id" {
-  description = "Firewall route table ID"
-  value       = aws_route_table.firewall.id
 } 

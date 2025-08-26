@@ -34,6 +34,18 @@ module "transit_gateway" {
   depends_on = [module.vpc]
 }
 
+# VPC 라우팅 모듈 (Transit Gateway 라우팅 추가)
+module "vpc_routing" {
+  source = "./modules/vpc_routing"
+  
+  transit_gateway_id = module.transit_gateway.transit_gateway_id
+  hub_private_a_route_table_id = module.vpc.hub_private_a_route_table_id
+  hub_private_b_route_table_id = module.vpc.hub_private_b_route_table_id
+  app_private_a_route_table_id = module.vpc.app_private_a_route_table_id
+  app_private_b_route_table_id = module.vpc.app_private_b_route_table_id
+  depends_on = [module.vpc, module.transit_gateway]
+}
+
 # Network Firewall 모듈
 module "network_firewall" {
   source = "./modules/network_firewall"
@@ -42,7 +54,6 @@ module "network_firewall" {
   environment = var.environment
   vpc_id = module.vpc.hub_vpc_id
   firewall_subnet_id = module.vpc.hub_firewall_subnet_id
-  internet_gateway_id = module.vpc.hub_internet_gateway_id
   availability_zones = var.availability_zones
 }
 
@@ -95,10 +106,12 @@ module "load_balancers" {
   source = "./modules/load_balancers"
   
   project = var.project
-  hub_public_subnet_ids = module.vpc.hub_public_subnet_ids
-  app_public_subnet_ids = module.vpc.app_public_subnet_ids
   app_private_subnet_ids = module.vpc.app_private_subnet_ids
+  app_public_subnet_ids = module.vpc.app_public_subnet_ids
+  hub_public_subnet_ids = module.vpc.hub_public_subnet_ids
   app_vpc_id = module.vpc.app_vpc_id
+  hub_vpc_id = module.vpc.hub_vpc_id
+  depends_on = [module.vpc]
 }
 
 # Application Secrets 모듈

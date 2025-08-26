@@ -57,24 +57,6 @@ resource "aws_networkfirewall_firewall" "main" {
   }
 }
 
-resource "aws_route_table" "firewall" {
-  vpc_id = var.vpc_id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = var.internet_gateway_id
-  }
-
-  tags = {
-    Name = "${var.project}-firewall-rt"
-  }
-}
-
-resource "aws_route_table_association" "firewall" {
-  subnet_id      = var.firewall_subnet_id
-  route_table_id = aws_route_table.firewall.id
-}
-
 resource "aws_cloudwatch_log_group" "firewall" {
   name              = "/${var.project}/firewall"
   retention_in_days = 3
@@ -118,6 +100,16 @@ resource "aws_cloudwatch_log_group" "codebuild_green" {
   tags = {
     Name = "${var.project}-codebuild-green-log-group"
   }
+}
+
+resource "aws_cloudwatch_log_stream" "green_app" {
+  name           = "app-green-logs"
+  log_group_name = aws_cloudwatch_log_group.green_app.name
+}
+
+resource "aws_cloudwatch_log_stream" "red_app" {
+  name           = "app-red-logs"
+  log_group_name = aws_cloudwatch_log_group.red_app.name
 }
 
 resource "aws_networkfirewall_logging_configuration" "main" {

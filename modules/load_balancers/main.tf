@@ -2,7 +2,7 @@ resource "aws_lb" "external_nlb" {
   name               = "${var.project}-app-external-nlb"
   internal           = false
   load_balancer_type = "network"
-  subnets            = var.app_public_subnet_ids
+  subnets            = var.hub_public_subnet_ids
 
   enable_deletion_protection = false
 
@@ -42,7 +42,7 @@ resource "aws_lb" "argo_external_nlb" {
   name               = "${var.project}-argo-external-nlb"
   internal           = false
   load_balancer_type = "network"
-  subnets            = var.app_public_subnet_ids
+  subnets            = var.hub_public_subnet_ids
 
   enable_deletion_protection = false
 
@@ -62,6 +62,58 @@ resource "aws_lb" "argo_internal_nlb" {
   tags = {
     Name = "${var.project}-argo-internal-nlb"
   }
+}
+
+# VPC Endpoint Service for Internal NLB (PrivateLink)
+resource "aws_vpc_endpoint_service" "internal_nlb" {
+  acceptance_required        = false
+  network_load_balancer_arns = [aws_lb.internal_nlb.arn]
+
+  tags = {
+    Name = "${var.project}-internal-nlb-endpoint-service"
+  }
+}
+
+# VPC Endpoint for Internal NLB (PrivateLink) - Hub VPC에서 Internal NLB 서비스에 연결
+resource "aws_vpc_endpoint" "internal_nlb" {
+  vpc_id            = var.hub_vpc_id
+  service_name      = aws_vpc_endpoint_service.internal_nlb.service_name
+  vpc_endpoint_type = "Interface"
+  subnet_ids        = var.hub_public_subnet_ids
+
+  private_dns_enabled = false
+
+  tags = {
+    Name = "${var.project}-internal-nlb-endpoint"
+  }
+
+  depends_on = [aws_vpc_endpoint_service.internal_nlb]
+}
+
+# VPC Endpoint Service for ArgoCD Internal NLB (PrivateLink)
+resource "aws_vpc_endpoint_service" "argo_internal_nlb" {
+  acceptance_required        = false
+  network_load_balancer_arns = [aws_lb.argo_internal_nlb.arn]
+
+  tags = {
+    Name = "${var.project}-argo-internal-nlb-endpoint-service"
+  }
+}
+
+# VPC Endpoint for ArgoCD Internal NLB (PrivateLink) - Hub VPC에서 ArgoCD Internal NLB 서비스에 연결
+resource "aws_vpc_endpoint" "argo_internal_nlb" {
+  vpc_id            = var.hub_vpc_id
+  service_name      = aws_vpc_endpoint_service.argo_internal_nlb.service_name
+  vpc_endpoint_type = "Interface"
+  subnet_ids        = var.hub_public_subnet_ids
+
+  private_dns_enabled = false
+
+  tags = {
+    Name = "${var.project}-argo-internal-nlb-endpoint"
+  }
+
+  depends_on = [aws_vpc_endpoint_service.argo_internal_nlb]
 }
 
 resource "aws_security_group" "alb" {
@@ -98,12 +150,13 @@ resource "aws_security_group" "alb" {
   }
 }
 
+# External NLB Target Group - Internal NLB로 직접 연결
 resource "aws_lb_target_group" "external_nlb" {
   name        = "${var.project}-app-external-nlb-tg"
   port        = 80
   protocol    = "TCP"
   target_type = "ip"
-  vpc_id      = var.app_vpc_id
+  vpc_id      = var.hub_vpc_id
 
   health_check {
     enabled             = true
@@ -170,12 +223,13 @@ resource "aws_lb_target_group" "internal_alb" {
   }
 }
 
+# ArgoCD External NLB Target Group - ArgoCD Internal NLB로 직접 연결
 resource "aws_lb_target_group" "argo_external_nlb" {
   name        = "${var.project}-argo-external-nlb-tg"
   port        = 80
   protocol    = "TCP"
   target_type = "ip"
-  vpc_id      = var.app_vpc_id
+  vpc_id      = var.hub_vpc_id
 
   health_check {
     enabled             = true
@@ -227,6 +281,46 @@ resource "aws_lb_listener" "external_nlb" {
     type             = "forward"
     target_group_arn = aws_lb_target_group.external_nlb.arn
   }
+}
+
+# Data sources
+data "aws_region" "current" {}
+
+# Data source to get VPC Endpoint ENI IP
+data "aws_network_interfaces" "internal_endpoint_enis" {
+  filter {
+    name   = "description"
+    values = ["VPC Endpoint Interface ${aws_vpc_endpoint.internal_nlb.id}"]
+  }
+}
+
+data "aws_network_interface" "internal_endpoint_eni" {
+  id = data.aws_network_interfaces.internal_endpoint_enis.ids[0]
+}
+
+data "aws_network_interfaces" "argo_internal_endpoint_enis" {
+  filter {
+    name   = "description"
+    values = ["VPC Endpoint Interface ${aws_vpc_endpoint.argo_internal_nlb.id}"]
+  }
+}
+
+data "aws_network_interface" "argo_internal_endpoint_eni" {
+  id = data.aws_network_interfaces.argo_internal_endpoint_enis.ids[0]
+}
+
+# VPC Endpoint Target Group Attachment - External NLB에서 VPC Endpoint IP로 라우팅
+resource "aws_lb_target_group_attachment" "external_nlb_endpoint" {
+  target_group_arn = aws_lb_target_group.external_nlb.arn
+  target_id        = data.aws_network_interface.internal_endpoint_eni.private_ip
+  port             = 80
+}
+
+# ArgoCD VPC Endpoint Target Group Attachment - ArgoCD External NLB에서 VPC Endpoint IP로 라우팅
+resource "aws_lb_target_group_attachment" "argo_external_nlb_endpoint" {
+  target_group_arn = aws_lb_target_group.argo_external_nlb.arn
+  target_id        = data.aws_network_interface.argo_internal_endpoint_eni.private_ip
+  port             = 80
 }
 
 resource "aws_lb_listener" "internal_nlb" {

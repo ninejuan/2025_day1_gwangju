@@ -1,3 +1,4 @@
+# EKS Cluster
 resource "aws_eks_cluster" "main" {
   name     = "${var.project}-eks-cluster"
   role_arn = aws_iam_role.eks_cluster.arn
@@ -6,7 +7,7 @@ resource "aws_eks_cluster" "main" {
   vpc_config {
     subnet_ids              = var.private_subnet_ids
     endpoint_private_access = true
-    endpoint_public_access  = false
+    endpoint_public_access  = true
     security_group_ids      = [aws_security_group.eks_cluster.id]
   }
 
@@ -29,6 +30,7 @@ resource "aws_eks_cluster" "main" {
   }
 }
 
+# IAM Role for EKS Cluster
 resource "aws_iam_role" "eks_cluster" {
   name = "${var.project}-eks-cluster-role"
 
@@ -46,6 +48,7 @@ resource "aws_iam_role" "eks_cluster" {
   })
 }
 
+# IAM Policy Attachments for EKS Cluster
 resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
   role       = aws_iam_role.eks_cluster.name
@@ -56,6 +59,7 @@ resource "aws_iam_role_policy_attachment" "eks_vpc_resource_controller" {
   role       = aws_iam_role.eks_cluster.name
 }
 
+# KMS Key for EKS
 resource "aws_kms_key" "eks" {
   description             = "KMS key for EKS cluster"
   deletion_window_in_days = 7
@@ -66,9 +70,9 @@ resource "aws_kms_key" "eks" {
   }
 }
 
+# Security Group for EKS Cluster
 resource "aws_security_group" "eks_cluster" {
-  name        = "${var.project}-eks-cluster-sg"
-  description = "Security group for EKS cluster"
+  name_prefix = "${var.project}-eks-cluster-sg"
   vpc_id      = var.vpc_id
 
   egress {
@@ -76,7 +80,6 @@ resource "aws_security_group" "eks_cluster" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "All outbound traffic"
   }
 
   tags = {
@@ -84,9 +87,9 @@ resource "aws_security_group" "eks_cluster" {
   }
 }
 
+# Security Group for EKS Node Groups
 resource "aws_security_group" "eks_node_group" {
-  name        = "${var.project}-eks-node-group-sg"
-  description = "Security group for EKS node groups"
+  name_prefix = "${var.project}-eks-node-group-sg"
   vpc_id      = var.vpc_id
 
   ingress {
@@ -94,7 +97,6 @@ resource "aws_security_group" "eks_node_group" {
     to_port         = 443
     protocol        = "tcp"
     security_groups = [aws_security_group.eks_cluster.id]
-    description     = "EKS cluster to node group communication"
   }
 
   egress {
@@ -102,7 +104,6 @@ resource "aws_security_group" "eks_node_group" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "All outbound traffic"
   }
 
   tags = {
@@ -110,6 +111,7 @@ resource "aws_security_group" "eks_node_group" {
   }
 }
 
+# IAM Role for Node Groups
 resource "aws_iam_role" "eks_node_group" {
   name = "${var.project}-eks-node-group-role"
 
@@ -127,47 +129,23 @@ resource "aws_iam_role" "eks_node_group" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "eks_node_group_policy" {
-  for_each = toset([
-    "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
-    "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",
-    "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly",
-  ])
-
-  policy_arn = each.value
+# IAM Policy Attachments for Node Groups
+resource "aws_iam_role_policy_attachment" "eks_worker_node_policy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
   role       = aws_iam_role.eks_node_group.name
 }
 
-resource "aws_eks_node_group" "addon" {
-  cluster_name    = aws_eks_cluster.main.name
-  node_group_name = "${var.project}-eks-addon-nodegroup"
-  node_role_arn   = aws_iam_role.eks_node_group.arn
-  subnet_ids      = var.private_subnet_ids
-  instance_types  = [var.addon_instance_type]
-
-  scaling_config {
-    desired_size = 2
-    max_size     = 4
-    min_size     = 2
-  }
-
-  update_config {
-    max_unavailable = 1
-  }
-
-  labels = {
-    "node.kubernetes.io/role" = "addon"
-  }
-
-  tags = {
-    Name = "${var.project}-eks-addon-nodegroup"
-  }
-
-  depends_on = [
-    aws_iam_role_policy_attachment.eks_node_group_policy,
-  ]
+resource "aws_iam_role_policy_attachment" "eks_cni_policy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+  role       = aws_iam_role.eks_node_group.name
 }
 
+resource "aws_iam_role_policy_attachment" "ec2_container_registry_read_only" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+  role       = aws_iam_role.eks_node_group.name
+}
+
+# Application Node Group
 resource "aws_eks_node_group" "app" {
   cluster_name    = aws_eks_cluster.main.name
   node_group_name = "${var.project}-eks-app-nodegroup"
@@ -181,19 +159,63 @@ resource "aws_eks_node_group" "app" {
     min_size     = 2
   }
 
-  update_config {
-    max_unavailable = 1
-  }
-
   labels = {
-    "node.kubernetes.io/role" = "app"
+    "skills" = "app"
   }
 
   tags = {
-    Name = "${var.project}-eks-app-nodegroup"
+    Name = "${var.project}-eks-app-node"
   }
 
   depends_on = [
-    aws_iam_role_policy_attachment.eks_node_group_policy,
+    aws_iam_role_policy_attachment.eks_worker_node_policy,
+    aws_iam_role_policy_attachment.eks_cni_policy,
+    aws_iam_role_policy_attachment.ec2_container_registry_read_only,
   ]
+}
+
+# Addon Node Group
+resource "aws_eks_node_group" "addon" {
+  cluster_name    = aws_eks_cluster.main.name
+  node_group_name = "${var.project}-eks-addon-nodegroup"
+  node_role_arn   = aws_iam_role.eks_node_group.arn
+  subnet_ids      = var.private_subnet_ids
+  instance_types  = [var.addon_instance_type]
+
+  scaling_config {
+    desired_size = 2
+    max_size     = 3
+    min_size     = 2
+  }
+
+  labels = {
+    "skills" = "addon"
+  }
+
+  taint {
+    key    = "CriticalAddonsOnly"
+    value  = "true"
+    effect = "NO_SCHEDULE"
+  }
+
+  tags = {
+    Name = "${var.project}-eks-addon-node"
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.eks_worker_node_policy,
+    aws_iam_role_policy_attachment.eks_cni_policy,
+    aws_iam_role_policy_attachment.ec2_container_registry_read_only,
+  ]
+}
+
+# Data source for EKS optimized AMI
+data "aws_ami" "eks_optimized" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["amazon-eks-node-${var.cluster_version}-v*"]
+  }
 }

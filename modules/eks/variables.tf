@@ -20,7 +20,7 @@ variable "cluster_version" {
 }
 
 variable "app_instance_type" {
-  description = "Instance type for application node group"
+  description = "Instance type for app node group"
   type        = string
   default     = "t3.medium"
 }

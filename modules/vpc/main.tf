@@ -212,7 +212,7 @@ resource "aws_route_table" "hub_firewall" {
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.hub.id
+    nat_gateway_id = aws_nat_gateway.hub.id
   }
 
   tags = {
@@ -325,3 +325,27 @@ resource "aws_route_table_association" "app_public_b" {
   route_table_id = aws_route_table.app_public.id
 } 
 data "aws_region" "current" {} 
+
+resource "aws_eip" "hub_nat" {
+  domain = "vpc"
+
+  tags = {
+    Name = "${var.project}-hub-nat-eip"
+  }
+}
+
+resource "aws_nat_gateway" "hub" {
+  allocation_id = aws_eip.hub_nat.id
+  subnet_id     = aws_subnet.hub_public_a.id
+
+  tags = {
+    Name = "${var.project}-hub-ngw"
+  }
+
+  depends_on = [aws_internet_gateway.hub]
+} 
+
+resource "aws_route_table_association" "hub_firewall" {
+  subnet_id      = aws_subnet.hub_firewall.id
+  route_table_id = aws_route_table.hub_firewall.id
+} 

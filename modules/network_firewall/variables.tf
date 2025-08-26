@@ -18,11 +18,6 @@ variable "firewall_subnet_id" {
   type        = string
 }
 
-variable "internet_gateway_id" {
-  description = "Internet Gateway ID"
-  type        = string
-}
-
 variable "availability_zones" {
   description = "Availability zones"
   type        = list(string)
