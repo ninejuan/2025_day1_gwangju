@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: green
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/<user>/gj2025-repository.git
+    targetRevision: gitops-green
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: skills
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+

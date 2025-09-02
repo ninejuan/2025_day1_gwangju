@@ -1,0 +1,41 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_ACCOUNT_ID: 156041424727
+    REPOSITORY_NAME: red
+    AWS_REGION: ap-northeast-2
+    GITHUB_USERNAME: 24sunrin015
+
+phases:
+  install:
+    commands:
+      - echo Installing dependencies...
+      - yum install -y jq git
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPOSITORY_NAME
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+      - IMAGE_TAG=$(date +%Y%m%d%H%M%S)
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPOSITORY_NAME:$IMAGE_TAG .
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPOSITORY_NAME:$IMAGE_TAG
+  post_build:
+    commands:
+      - echo Updating rollouts.yaml...
+      - git config --global user.email "ci@juany.dev"
+      - git config --global user.name "CI Bot"
+      - git clone https://$GITHUB_USERNAME:$GITHUB_TOKEN@github.com/$GITHUB_USERNAME/gj2025-repository.git
+      - cd gj2025-repository
+      - git checkout gitops-red
+      - "sed -i \"s|image: .*|image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPOSITORY_NAME:$IMAGE_TAG|\" rollouts.yaml"
+      - git add rollouts.yaml
+      - git commit -m "Update image tag to $IMAGE_TAG"
+      - git push origin gitops-red
+
+artifacts:
+  files: []

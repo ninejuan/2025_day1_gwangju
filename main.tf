@@ -145,24 +145,26 @@ module "github_token" {
 module "codebuild_red" {
   source = "./modules/codebuild"
 
-  project            = var.project
-  app_name           = "red"
-  ecr_repository_url = module.ecr.repository_urls["red"]
-  ecr_repository_arn = module.ecr.repository_arns["red"]
-  github_token_arn   = module.github_token.secret_arn
-  depends_on         = [module.ecr, module.github_token]
+  project              = var.project
+  app_name             = "red"
+  ecr_repository_url   = module.ecr.repository_urls["red"]
+  ecr_repository_arn   = module.ecr.repository_arns["red"]
+  github_token_arn     = module.github_token.secret_arn
+  artifacts_bucket_arn = module.s3.red_artifacts_bucket_arn
+  depends_on           = [module.ecr, module.github_token, module.s3]
 }
 
 # CodeBuild Green 모듈
 module "codebuild_green" {
   source = "./modules/codebuild"
 
-  project            = var.project
-  app_name           = "green"
-  ecr_repository_url = module.ecr.repository_urls["green"]
-  ecr_repository_arn = module.ecr.repository_arns["green"]
-  github_token_arn   = module.github_token.secret_arn
-  depends_on         = [module.ecr, module.github_token]
+  project              = var.project
+  app_name             = "green"
+  ecr_repository_url   = module.ecr.repository_urls["green"]
+  ecr_repository_arn   = module.ecr.repository_arns["green"]
+  github_token_arn     = module.github_token.secret_arn
+  artifacts_bucket_arn = module.s3.green_artifacts_bucket_arn
+  depends_on           = [module.ecr, module.github_token, module.s3]
 }
 
 # CodePipeline Red 모듈
@@ -171,12 +173,13 @@ module "codepipeline_red" {
 
   project                = var.project
   app_name               = "red"
-  artifact_bucket_arn    = "arn:aws:s3:::${var.project}-red-artifacts-bucket"
+  artifact_bucket_arn    = module.s3.red_artifacts_bucket_arn
+  artifact_bucket_name   = module.s3.red_artifacts_bucket_name
   repository_id          = var.repository_id
   source_branch          = "app-red"
   codebuild_project_name = module.codebuild_red.codebuild_project_name
   github_token           = var.github_token
-  depends_on             = [module.codebuild_red]
+  depends_on             = [module.codebuild_red, module.s3]
 }
 
 # CodePipeline Green 모듈
@@ -185,12 +188,13 @@ module "codepipeline_green" {
 
   project                = var.project
   app_name               = "green"
-  artifact_bucket_arn    = "arn:aws:s3:::${var.project}-green-artifacts-bucket"
+  artifact_bucket_arn    = module.s3.green_artifacts_bucket_arn
+  artifact_bucket_name   = module.s3.green_artifacts_bucket_name
   repository_id          = var.repository_id
   source_branch          = "app-green"
   codebuild_project_name = module.codebuild_green.codebuild_project_name
   github_token           = var.github_token
-  depends_on             = [module.codebuild_green]
+  depends_on             = [module.codebuild_green, module.s3]
 }
 
 # S3 모듈

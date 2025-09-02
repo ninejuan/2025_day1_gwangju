@@ -22,3 +22,8 @@ variable "github_token_arn" {
   description = "GitHub token secret ARN"
   type        = string
 }
+
+variable "artifacts_bucket_arn" {
+  description = "S3 artifacts bucket ARN"
+  type        = string
+}

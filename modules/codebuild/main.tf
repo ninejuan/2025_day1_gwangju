@@ -67,8 +67,8 @@ resource "aws_iam_role_policy" "codebuild" {
           "s3:PutObject"
         ]
         Resource = [
-          "arn:aws:s3:::${var.project}-${var.app_name}-artifacts-bucket",
-          "arn:aws:s3:::${var.project}-${var.app_name}-artifacts-bucket/*"
+          var.artifacts_bucket_arn,
+          "${var.artifacts_bucket_arn}/*"
         ]
       }
     ]
@@ -83,7 +83,7 @@ resource "aws_codebuild_project" "main" {
 
   artifacts {
     type = "S3"
-    location = "arn:aws:s3:::${var.project}-${var.app_name}-artifacts-bucket"
+    location = var.artifacts_bucket_arn
     name = "${var.project}-${var.app_name}-build-artifacts"
     packaging = "NONE"
   }
@@ -96,14 +96,8 @@ resource "aws_codebuild_project" "main" {
     privileged_mode             = true
 
     environment_variable {
-      name  = "REPOSITORY_URI"
-      value = var.ecr_repository_url
-      type  = "SECRETS_MANAGER"
-    }
-
-    environment_variable {
-      name  = "IMAGE_TAG"
-      value = "latest"
+      name  = "GITHUB_TOKEN"
+      value = var.github_token_arn
       type  = "SECRETS_MANAGER"
     }
   }

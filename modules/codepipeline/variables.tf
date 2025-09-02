@@ -13,6 +13,11 @@ variable "artifact_bucket_arn" {
   type        = string
 }
 
+variable "artifact_bucket_name" {
+  description = "Artifact bucket name"
+  type        = string
+}
+
 variable "repository_id" {
   description = "Repository ID"
   type        = string

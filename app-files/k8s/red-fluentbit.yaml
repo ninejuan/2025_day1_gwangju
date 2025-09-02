@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: red-fluent-bit
+  namespace: amazon-cloudwatch
+  labels:
+    app: red-fluent-bit
+spec:
+  selector:
+    matchLabels:
+      app: red-fluent-bit
+  template:
+    metadata:
+      labels:
+        app: red-fluent-bit
+    spec:
+      serviceAccountName: fluent-bit-sa
+      nodeSelector:
+        eks.amazonaws.com/nodegroup: gj2025-eks-addon-nodegroup
+      containers:
+        - name: fluent-bit
+          image: public.ecr.aws/aws-observability/aws-for-fluent-bit:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              memory: 200Mi
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          volumeMounts:
+            - name: varlog
+              mountPath: /var/log
+            - name: varlibdockercontainers
+              mountPath: /var/lib/docker/containers
+              readOnly: true
+            - name: config
+              mountPath: /fluent-bit/etc/
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: varlog
+          hostPath:
+            path: /var/log
+        - name: varlibdockercontainers
+          hostPath:
+            path: /var/lib/docker/containers
+        - name: config
+          configMap:
+            name: red-fluent-bit-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: red-fluent-bit-config
+  namespace: amazon-cloudwatch
+data:
+  fluent-bit.conf: |
+    [SERVICE]
+        Flush        1
+        Daemon       Off
+        Log_Level    info
+
+    [INPUT]
+        Name              tail
+        Path              /var/log/containers/*.log
+        Parser            json
+        Tag               kube.*
+        Refresh_Interval  5
+        Mem_Buf_Limit     5MB
+        Skip_Long_Lines   On
+
+    [FILTER]
+        Name   grep
+        Match  *
+        Regex  log (?i)(GET|POST|PUT|DELETE|PATCH)
+
+    [FILTER]
+        Name   grep
+        Match  *
+        Exclude log /health
+
+    [OUTPUT]
+        Name            cloudwatch_logs
+        Match           *
+        region          ap-northeast-2
+        log_group_name  /gj2025/app/red
+        log_stream_name app-red-logs
+        auto_create_group true
+
