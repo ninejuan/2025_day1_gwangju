@@ -1,3 +1,7 @@
+locals {
+  amazon_cloudwatch_observability_config = file("${path.module}/configs/container_insights.json")
+}
+
 # EKS Cluster
 resource "aws_eks_cluster" "main" {
   name     = "${var.project}-eks-cluster"
@@ -29,6 +33,23 @@ resource "aws_eks_cluster" "main" {
     Name = "${var.project}-eks-cluster"
   }
 }
+
+# OIDC Identity Provider for EKS
+data "tls_certificate" "eks" {
+  url = aws_eks_cluster.main.identity[0].oidc[0].issuer
+}
+
+resource "aws_iam_openid_connect_provider" "eks" {
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = [data.tls_certificate.eks.certificates[0].sha1_fingerprint]
+  url             = aws_eks_cluster.main.identity[0].oidc[0].issuer
+
+  tags = {
+    Name = "${var.project}-eks-oidc-provider"
+  }
+}
+
+
 
 # IAM Role for EKS Cluster
 resource "aws_iam_role" "eks_cluster" {
@@ -226,5 +247,21 @@ resource "aws_eks_node_group" "addon" {
         done
       fi
     EOT
+  }
+}
+
+resource "aws_eks_addon" "container_insights" {
+  cluster_name = aws_eks_cluster.main.name
+  addon_name   = "amazon-cloudwatch-observability"
+
+  configuration_values = local.amazon_cloudwatch_observability_config
+
+  depends_on = [
+    aws_eks_node_group.app,
+    aws_eks_node_group.addon
+  ]
+
+  tags = {
+    Name = "${var.project}-container-insights"
   }
 }

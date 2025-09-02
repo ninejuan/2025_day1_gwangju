@@ -141,6 +141,28 @@ module "github_token" {
   }
 }
 
+# IAM 모듈
+module "iam" {
+  source = "./modules/iam"
+
+  project      = var.project
+  account_id   = data.aws_caller_identity.current.account_id
+  oidc_provider = replace(module.eks.cluster_oidc_issuer_url, "https://", "")
+  secret_arns  = [
+    module.app_secrets.secret_arn,
+    module.github_token.secret_arn
+  ]
+  kms_key_arns = [
+    module.app_secrets.kms_key_arn,
+    module.github_token.kms_key_arn
+  ]
+
+  depends_on = [module.eks]
+}
+
+# AWS Account ID Data Source
+data "aws_caller_identity" "current" {}
+
 # CodeBuild Red 모듈
 module "codebuild_red" {
   source = "./modules/codebuild"

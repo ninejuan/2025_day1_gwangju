@@ -41,4 +41,6 @@ output "node_group_iam_role_arn" {
 output "cluster_kms_key_arn" {
   description = "EKS cluster KMS key ARN"
   value       = aws_kms_key.eks.arn
-} 
+}
+
+ 

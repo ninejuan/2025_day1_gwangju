@@ -3,8 +3,17 @@
 echo "=== 2025년도 전국기능경기대회 클라우드컴퓨팅 솔루션 아키텍처 과제 ==="
 echo "애플리케이션 배포를 시작합니다..."
 
-# 1. 기본 리소스 생성
-echo "1. 기본 리소스 생성 중..."
+# 1. External Secrets Operator 설치 확인
+echo "1. External Secrets Operator 상태 확인 중..."
+if ! kubectl get crd | grep -q "externalsecrets.external-secrets.io"; then
+    echo "External Secrets Operator가 설치되지 않았습니다."
+    echo "다음 명령어로 설치하세요:"
+    echo "./k8s/install-external-secrets.sh"
+    exit 1
+fi
+
+# 2. 기본 리소스 생성
+echo "2. 기본 리소스 생성 중..."
 kubectl apply -f k8s/fluentbit-rbac.yaml
 kubectl apply -f k8s/external-secrets.yaml
 

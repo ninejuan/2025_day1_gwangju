@@ -29,4 +29,6 @@ variable "addon_instance_type" {
   description = "Instance type for addon node group"
   type        = string
   default     = "t3.medium"
-} 
+}
+
+ 

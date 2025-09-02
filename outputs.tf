@@ -92,3 +92,14 @@ output "network_firewall_id" {
   description = "Network Firewall ID"
   value       = module.network_firewall.firewall_id
 }
+
+# IAM Outputs
+output "external_secrets_role_arn" {
+  description = "External Secrets IAM role ARN"
+  value       = module.iam.external_secrets_role_arn
+}
+
+output "external_secrets_role_name" {
+  description = "External Secrets IAM role name"
+  value       = module.iam.external_secrets_role_name
+}
