@@ -12,7 +12,6 @@ provider "aws" {
   region = var.aws_region
 }
 
-# VPC 모듈
 module "vpc" {
   source = "./modules/vpc"
 
@@ -22,7 +21,6 @@ module "vpc" {
   availability_zones = var.availability_zones
 }
 
-# Transit Gateway 모듈
 module "transit_gateway" {
   source = "./modules/transit_gateway"
 
@@ -34,7 +32,6 @@ module "transit_gateway" {
   depends_on     = [module.vpc]
 }
 
-# VPC 라우팅 모듈 (Transit Gateway 라우팅 추가)
 module "vpc_routing" {
   source = "./modules/vpc_routing"
 
@@ -46,7 +43,6 @@ module "vpc_routing" {
   depends_on                   = [module.vpc, module.transit_gateway]
 }
 
-# Network Firewall 모듈
 module "network_firewall" {
   source = "./modules/network_firewall"
 
@@ -57,7 +53,6 @@ module "network_firewall" {
   availability_zones = var.availability_zones
 }
 
-# Bastion 모듈
 module "bastion" {
   source = "./modules/bastion"
 
@@ -67,7 +62,6 @@ module "bastion" {
   depends_on = [module.vpc]
 }
 
-# RDS 모듈
 module "rds" {
   source = "./modules/rds"
 
@@ -79,7 +73,6 @@ module "rds" {
   depends_on                 = [module.vpc, module.eks]
 }
 
-# ECR 모듈
 module "ecr" {
   source = "./modules/ecr"
 
@@ -91,7 +84,6 @@ module "ecr" {
   }
 }
 
-# EKS 모듈
 module "eks" {
   source = "./modules/eks"
 
@@ -101,7 +93,6 @@ module "eks" {
   depends_on         = [module.vpc, module.ecr]
 }
 
-# Load Balancers 모듈
 module "load_balancers" {
   source = "./modules/load_balancers"
 
@@ -114,7 +105,6 @@ module "load_balancers" {
   depends_on             = [module.vpc]
 }
 
-# Application Secrets 모듈
 module "app_secrets" {
   source = "./modules/secrets"
 
@@ -129,7 +119,6 @@ module "app_secrets" {
   depends_on = [module.rds]
 }
 
-# GitHub Token Secrets 모듈
 module "github_token" {
   source = "./modules/secrets"
 
@@ -141,7 +130,6 @@ module "github_token" {
   }
 }
 
-# IAM 모듈
 module "iam" {
   source = "./modules/iam"
 
@@ -160,10 +148,8 @@ module "iam" {
   depends_on = [module.eks]
 }
 
-# AWS Account ID Data Source
 data "aws_caller_identity" "current" {}
 
-# CodeBuild Red 모듈
 module "codebuild_red" {
   source = "./modules/codebuild"
 
@@ -176,7 +162,6 @@ module "codebuild_red" {
   depends_on           = [module.ecr, module.github_token, module.s3]
 }
 
-# CodeBuild Green 모듈
 module "codebuild_green" {
   source = "./modules/codebuild"
 
@@ -189,7 +174,6 @@ module "codebuild_green" {
   depends_on           = [module.ecr, module.github_token, module.s3]
 }
 
-# CodePipeline Red 모듈
 module "codepipeline_red" {
   source = "./modules/codepipeline"
 
@@ -204,7 +188,6 @@ module "codepipeline_red" {
   depends_on             = [module.codebuild_red, module.s3]
 }
 
-# CodePipeline Green 모듈
 module "codepipeline_green" {
   source = "./modules/codepipeline"
 
@@ -219,7 +202,6 @@ module "codepipeline_green" {
   depends_on             = [module.codebuild_green, module.s3]
 }
 
-# S3 모듈
 module "s3" {
   source = "./modules/s3"
 
