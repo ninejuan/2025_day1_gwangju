@@ -37,12 +37,6 @@ terraform.rc
 # Ignore lock files
 .terraform.lock.hcl
 
-# Ignore SSH keys
-*.pem
-*.key
-modules/bastion/ssh/bastion
-modules/bastion/ssh/bastion.pub
-
 # Ignore OS generated files
 .DS_Store
 .DS_Store?
