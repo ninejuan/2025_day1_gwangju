@@ -114,7 +114,7 @@ module "app_secrets" {
   secrets = {
     DB_USER     = "admin"
     DB_PASSWORD = "Skills53#$%"
-    DB_URL      = "mysql://admin:Skills53#$%@${module.rds.db_endpoint}:3309/day1"
+    DB_URL      = "${module.rds.db_endpoint}"
   }
   depends_on = [module.rds]
 }

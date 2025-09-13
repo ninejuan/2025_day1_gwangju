@@ -22,11 +22,24 @@ spec:
         eks.amazonaws.com/nodegroup: gj2025-eks-app-nodegroup
       containers:
       - name: red
-        image: 156041424727.dkr.ecr.ap-northeast-2.amazonaws.com/red:latest
+        image: 571480186401.dkr.ecr.ap-northeast-2.amazonaws.com/red:latest
         imagePullPolicy: Always
-        envFrom:
-        - secretRef:
-            name: db-secret
+        env:
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: DB_USER
+        - name: DB_PASSWD
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: DB_PASSWORD
+        - name: DB_URL
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: DB_URL
         ports:
         - containerPort: 8080
   strategy:

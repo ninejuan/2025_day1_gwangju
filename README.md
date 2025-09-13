@@ -9,6 +9,7 @@
 - [ ] External Secrets Operator 설치 (./install-external-secrets.sh)
 - [ ] Secrets 배포 (kubectl apply -f k8s/external-secrets.yaml)
 - [ ] ArgoCD 설치 및 접속 설정 (./argocd.sh)
+- [ ] Argo Rollouts 설치 (./argo-rollouts.sh)
 - [ ] ArgoCD Ingress 배포
 - [ ] ArgoCD CLI 설치
 - [ ] 애플리케이션 배포
@@ -20,4 +21,4 @@
 ## Docs
 ### D1. ALB Ingress Controller
 GitHub 문서 참고: https://github.com/sigmd-com/eks-references/tree/main/3_networking/alb_ingress_controller
-IAM Policy에서 ec2: DescribeRouteTable Perm이 필요함. 그냥 wildcard perm 주던가 권한 추가하던가 알아서 하면 됩니다.
+IAM Policy에서 ec2:DescribeRouteTable Perm이 필요함. 그냥 wildcard perm 주던가 권한 추가하던가 알아서 하면 됩니다.

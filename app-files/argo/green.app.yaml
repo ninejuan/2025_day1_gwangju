@@ -6,8 +6,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/<user>/gj2025-repository.git
+    repoURL: https://github.com/24sunrin015/gj2025-repository.git
     targetRevision: gitops-green
+    path: .
   destination:
     server: https://kubernetes.default.svc
     namespace: skills
