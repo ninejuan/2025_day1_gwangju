@@ -37,3 +37,8 @@ variable "github_token" {
   description = "GitHub token"
   type        = string
 }
+
+variable "github_username" {
+  description = "GitHub username"
+  type        = string
+}

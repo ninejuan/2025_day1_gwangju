@@ -48,7 +48,10 @@ resource "aws_iam_role_policy" "codebuild" {
       {
         Effect = "Allow"
         Action = [
-          "ecr:PutImage"
+          "ecr:PutImage",
+          "ecr:InitiateLayerUpload",
+          "ecr:UploadLayerPart",
+          "ecr:CompleteLayerUpload"
         ]
         Resource = var.ecr_repository_arn
       },
@@ -58,6 +61,13 @@ resource "aws_iam_role_policy" "codebuild" {
           "secretsmanager:GetSecretValue"
         ]
         Resource = var.github_token_arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt"
+        ]
+        Resource = var.github_token_kms_key_arn
       },
       {
         Effect = "Allow"
@@ -104,7 +114,7 @@ resource "aws_codebuild_project" "main" {
 
   source {
     type      = "GITHUB"
-    location  = "https://github.com/cloud53/gj2025-repository.git"
+    location  = "https://github.com/${var.github_username}/gj2025-repository.git"
     buildspec = "buildspec.yaml"
     
     auth {
@@ -112,6 +122,8 @@ resource "aws_codebuild_project" "main" {
       resource = var.github_token_arn
     }
   }
+
+  source_version = "app-${var.app_name}"
 
   logs_config {
     cloudwatch_logs {
@@ -122,5 +134,22 @@ resource "aws_codebuild_project" "main" {
 
   tags = {
     Name = "${var.project}-app-${var.app_name}-build"
+  }
+}
+
+# GitHub webhook을 통한 즉시 트리거 설정
+resource "aws_codebuild_webhook" "main" {
+  project_name = aws_codebuild_project.main.name
+  build_type   = "BUILD"
+
+  filter_group {
+    filter {
+      type    = "EVENT"
+      pattern = "PUSH"
+    }
+    filter {
+      type    = "HEAD_REF"
+      pattern = "refs/heads/app-${var.app_name}"
+    }
   }
 }

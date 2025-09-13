@@ -159,6 +159,8 @@ module "codebuild_red" {
   ecr_repository_arn   = module.ecr.repository_arns["red"]
   github_token_arn     = module.github_token.secret_arn
   artifacts_bucket_arn = module.s3.red_artifacts_bucket_arn
+  github_username      = var.github_username
+  github_token_kms_key_arn = module.github_token.kms_key_arn
   depends_on           = [module.ecr, module.github_token, module.s3]
 }
 
@@ -171,6 +173,8 @@ module "codebuild_green" {
   ecr_repository_arn   = module.ecr.repository_arns["green"]
   github_token_arn     = module.github_token.secret_arn
   artifacts_bucket_arn = module.s3.green_artifacts_bucket_arn
+  github_username      = var.github_username
+  github_token_kms_key_arn = module.github_token.kms_key_arn
   depends_on           = [module.ecr, module.github_token, module.s3]
 }
 
@@ -185,6 +189,7 @@ module "codepipeline_red" {
   source_branch          = "app-red"
   codebuild_project_name = module.codebuild_red.codebuild_project_name
   github_token           = var.github_token
+  github_username        = var.github_username
   depends_on             = [module.codebuild_red, module.s3]
 }
 
@@ -199,6 +204,7 @@ module "codepipeline_green" {
   source_branch          = "app-green"
   codebuild_project_name = module.codebuild_green.codebuild_project_name
   github_token           = var.github_token
+  github_username        = var.github_username
   depends_on             = [module.codebuild_green, module.s3]
 }
 

@@ -2,6 +2,8 @@
 
 echo "=== External Secrets Operator 설치 ==="
 
+export ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+
 # 1. Helm repo 추가
 echo "1. Helm repo 추가 중..."
 helm repo add external-secrets https://charts.external-secrets.io
@@ -14,7 +16,7 @@ helm install external-secrets external-secrets/external-secrets \
   --create-namespace \
   --set installCRDs=true \
   --set serviceAccount.create=true \
-  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=arn:aws:iam::156041424727:role/gj2025-external-secrets-role
+  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=arn:aws:iam::${ACCOUNT_ID}:role/gj2025-external-secrets-role
 
 # 3. 설치 상태 확인
 echo "3. 설치 상태 확인 중..."

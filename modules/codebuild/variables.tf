@@ -27,3 +27,13 @@ variable "artifacts_bucket_arn" {
   description = "S3 artifacts bucket ARN"
   type        = string
 }
+
+variable "github_username" {
+  description = "GitHub username"
+  type        = string
+}
+
+variable "github_token_kms_key_arn" {
+  description = "GitHub token KMS key ARN"
+  type        = string
+}

@@ -12,3 +12,6 @@ kubectl get secret -n argocd argocd-initial-admin-secret -o jsonpath="{.data.pas
 #kubectl exec -it -n argocd deployment/argocd-server -- /bin/bash
 #argocd login localhost:8080
 #argocd account update-password
+
+# ArgoCD Ingress 배포
+# kubectl apply -f ../argo/argo-ingress.yaml

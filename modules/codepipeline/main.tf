@@ -74,7 +74,7 @@ resource "aws_codepipeline" "main" {
       output_artifacts = ["source_output"]
 
       configuration = {
-        Owner       = "ThirdParty"
+        Owner       = var.github_username
         OAuthToken = var.github_token
         Repo        = var.repository_id
         Branch      = var.source_branch
