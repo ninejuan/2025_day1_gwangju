@@ -1,0 +1,24 @@
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: red-tgb
+  namespace: skills
+spec:
+  targetGroupARN: arn:aws:elasticloadbalancing:ap-northeast-2:571480186401:targetgroup/gj2025-app-red-tg/106a7318a4344326
+  targetType: ip
+  serviceRef:
+    name: red-service
+    port: 80
+---
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: green-tgb
+  namespace: skills
+spec:
+  targetGroupARN: arn:aws:elasticloadbalancing:ap-northeast-2:571480186401:targetgroup/gj2025-app-green-tg/74af8c507516a8a3
+  targetType: ip
+  serviceRef:
+    name: green-service
+    port: 80
+

@@ -26,4 +26,9 @@ variable "app_vpc_id" {
 variable "hub_vpc_id" {
   description = "Hub VPC ID"
   type        = string
+}
+
+variable "cluster_name" {
+  description = "EKS cluster name"
+  type        = string
 } 

@@ -97,6 +97,7 @@ module "load_balancers" {
   source = "./modules/load_balancers"
 
   project                = var.project
+  cluster_name           = module.eks.cluster_name
   app_private_subnet_ids = module.vpc.app_private_subnet_ids
   app_public_subnet_ids  = module.vpc.app_public_subnet_ids
   hub_public_subnet_ids  = module.vpc.hub_public_subnet_ids

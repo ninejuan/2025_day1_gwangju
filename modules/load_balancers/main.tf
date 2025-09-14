@@ -34,7 +34,9 @@ resource "aws_lb" "internal_alb" {
   enable_deletion_protection = false
 
   tags = {
-    Name = "${var.project}-app-alb"
+    Name                                     = "${var.project}-app-alb"
+    "kubernetes.io/cluster/${var.cluster_name}" = "owned"
+    "elbv2.k8s.aws/cluster"                     = var.cluster_name
   }
 }
 
@@ -179,7 +181,7 @@ resource "aws_lb_target_group" "internal_nlb" {
   name        = "${var.project}-app-internal-nlb-tg"
   port        = 80
   protocol    = "TCP"
-  target_type = "ip"
+  target_type = "alb"
   vpc_id      = var.app_vpc_id
 
   health_check {
@@ -220,6 +222,55 @@ resource "aws_lb_target_group" "internal_alb" {
 
   tags = {
     Name = "${var.project}-app-alb-tg"
+  }
+}
+
+# Target groups for app red/green (ip mode) to be bound from Kubernetes via TargetGroupBinding
+resource "aws_lb_target_group" "app_red_ip_tg" {
+  name        = "${var.project}-app-red-tg"
+  port        = 80
+  protocol    = "HTTP"
+  target_type = "ip"
+  vpc_id      = var.app_vpc_id
+
+  health_check {
+    enabled             = true
+    healthy_threshold   = 3
+    interval            = 30
+    matcher             = "200"
+    path                = "/health"
+    port                = "traffic-port"
+    protocol            = "HTTP"
+    timeout             = 5
+    unhealthy_threshold = 3
+  }
+
+  tags = {
+    Name = "${var.project}-app-red-tg"
+  }
+}
+
+resource "aws_lb_target_group" "app_green_ip_tg" {
+  name        = "${var.project}-app-green-tg"
+  port        = 80
+  protocol    = "HTTP"
+  target_type = "ip"
+  vpc_id      = var.app_vpc_id
+
+  health_check {
+    enabled             = true
+    healthy_threshold   = 3
+    interval            = 30
+    matcher             = "200"
+    path                = "/health"
+    port                = "traffic-port"
+    protocol            = "HTTP"
+    timeout             = 5
+    unhealthy_threshold = 3
+  }
+
+  tags = {
+    Name = "${var.project}-app-green-tg"
   }
 }
 
@@ -356,7 +407,7 @@ resource "aws_lb_listener_rule" "red_app" {
 
   action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.internal_alb.arn
+    target_group_arn = aws_lb_target_group.app_red_ip_tg.arn
   }
 
   condition {
@@ -372,12 +423,28 @@ resource "aws_lb_listener_rule" "green_app" {
 
   action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.internal_alb.arn
+    target_group_arn = aws_lb_target_group.app_green_ip_tg.arn
   }
 
   condition {
     path_pattern {
       values = ["/green*"]
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "green_health" {
+  listener_arn = aws_lb_listener.internal_alb.arn
+  priority     = 50
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.app_green_ip_tg.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/health"]
     }
   }
 }
@@ -402,4 +469,10 @@ resource "aws_lb_listener" "argo_internal_nlb" {
     type             = "forward"
     target_group_arn = aws_lb_target_group.argo_internal_nlb.arn
   }
+}
+
+resource "aws_lb_target_group_attachment" "internal_nlb_to_alb" {
+  target_group_arn = aws_lb_target_group.internal_nlb.arn
+  target_id        = aws_lb.internal_alb.arn
+  port             = 80
 } 

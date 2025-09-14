@@ -59,10 +59,10 @@ output "external_nlb_dns_name" {
   value       = module.load_balancers.external_nlb_dns_name
 }
 
-output "internal_alb_dns_name" {
-  description = "Internal ALB DNS name"
-  value       = module.load_balancers.internal_alb_dns_name
-}
+# output "internal_alb_dns_name" {
+#   description = "Internal ALB DNS name"
+#   value       = module.load_balancers.internal_alb_dns_name
+# }
 
 # Secrets Outputs
 output "app_secrets_arn" {
