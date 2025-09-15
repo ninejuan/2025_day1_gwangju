@@ -64,3 +64,14 @@ resource "aws_ec2_transit_gateway_route" "app_to_hub" {
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.hub.id
   transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.app.id
 }
+
+# # Transit Gateway Route Table Associations
+# resource "aws_ec2_transit_gateway_route_table_association" "hub" {
+#   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.hub.id
+#   transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.hub.id
+# }
+
+# resource "aws_ec2_transit_gateway_route_table_association" "app" {
+#   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.app.id
+#   transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.app.id
+# }

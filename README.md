@@ -6,6 +6,7 @@
 - [ ] terraform apply -auto-approve
 - [ ] Bastion aws configure && kubeconfig update
 - [ ] ALB 설치 매뉴얼에 따라 ALB Ingress Controller 설치 (D1)
+- [ ] skills 네임스페이스 생성 (k create ns skills)
 - [ ] External Secrets Operator 설치 (./install-external-secrets.sh)
 - [ ] Secrets 배포 (kubectl apply -f k8s/external-secrets.yaml)
 - [ ] ArgoCD 설치 및 접속 설정 (./argocd.sh)
@@ -15,6 +16,7 @@
 - [ ] 애플리케이션 배포
 
 ## App 배포 후 진행
+- [ ] 
 
 ## 주의사항
 - AWS ID가 하드코딩된 경우가 있음. 이 경우 오류나지 않도록 주의.

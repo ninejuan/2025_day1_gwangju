@@ -15,3 +15,12 @@ kubectl get secret -n argocd argocd-initial-admin-secret -o jsonpath="{.data.pas
 
 # ArgoCD Ingress 배포
 # kubectl apply -f ../argo/argo-ingress.yaml
+
+# ArgoCD Patch
+# 만약 ArgoCD Ingress가 삭제되지 않는 경우 아래 명령어로 실행
+# kubectl patch ingress gj2025-argo-internal-nlb -n argocd -p '{"metadata":{"finalizers":[]}}' --type=merge
+
+# ArgoCD 로그인 문제 해결
+# kubectl patch configmap argocd-cm -n argocd --type merge -p '{"data":{"url":"http://gj2025-argo-external-nlb-d7c475da19b55197.elb.ap-northeast-2.amazonaws.com"}}'
+# kubectl patch configmap argocd-cmd-params-cm -n argocd --type merge -p '{"data":{"server.insecure":"true"}}'
+# kubectl rollout restart deployment/argocd-server -n argocd

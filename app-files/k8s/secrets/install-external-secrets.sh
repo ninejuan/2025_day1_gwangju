@@ -14,6 +14,7 @@ helm install external-secrets external-secrets/external-secrets \
   --create-namespace \
   --set installCRDs=true \
   --set serviceAccount.create=true \
+  --set serviceAccount.name=external-secrets-sa \
   --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=arn:aws:iam::${ACCOUNT_ID}:role/gj2025-external-secrets-role
 
 echo "3. 설치 상태 확인 중..."

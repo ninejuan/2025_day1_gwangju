@@ -137,19 +137,19 @@ resource "aws_codebuild_project" "main" {
   }
 }
 
-# GitHub webhook을 통한 즉시 트리거 설정
-resource "aws_codebuild_webhook" "main" {
-  project_name = aws_codebuild_project.main.name
-  build_type   = "BUILD"
+# CodeBuild Webhook는 CodePipeline을 통해 트리거되므로 제거
+# resource "aws_codebuild_webhook" "main" {
+#   project_name = aws_codebuild_project.main.name
+#   build_type   = "BUILD"
 
-  filter_group {
-    filter {
-      type    = "EVENT"
-      pattern = "PUSH"
-    }
-    filter {
-      type    = "HEAD_REF"
-      pattern = "refs/heads/app-${var.app_name}"
-    }
-  }
-}
+#   filter_group {
+#     filter {
+#       type    = "EVENT"
+#       pattern = "PUSH"
+#     }
+#     filter {
+#       type    = "HEAD_REF"
+#       pattern = "refs/heads/app-${var.app_name}"
+#     }
+#   }
+# }

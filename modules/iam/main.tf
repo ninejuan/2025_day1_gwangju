@@ -39,7 +39,9 @@ resource "aws_iam_role_policy" "external_secrets" {
           "secretsmanager:GetSecretValue",
           "secretsmanager:DescribeSecret"
         ]
-        Resource = var.secret_arns
+        Resource = [
+          "arn:aws:secretsmanager:ap-northeast-2:${var.account_id}:secret:${var.project}-*"
+        ]
       },
       {
         Effect = "Allow"

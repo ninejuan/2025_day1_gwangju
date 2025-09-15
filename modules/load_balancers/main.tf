@@ -66,6 +66,76 @@ resource "aws_lb" "argo_internal_nlb" {
   }
 }
 
+# Security Group for App Internal NLB VPC Endpoint
+resource "aws_security_group" "app_internal_vpce" {
+  name        = "${var.project}-app-internal-vpce-sg"
+  description = "Security group for App Internal NLB VPC Endpoint"
+  vpc_id      = var.hub_vpc_id
+
+  ingress {
+    from_port   = 0
+    to_port     = 65535
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow all TCP traffic"
+  }
+
+  ingress {
+    from_port   = 0
+    to_port     = 65535
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow all UDP traffic"
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "All outbound traffic"
+  }
+
+  tags = {
+    Name = "${var.project}-app-internal-vpce-sg"
+  }
+}
+
+# Security Group for ArgoCD Internal NLB VPC Endpoint
+resource "aws_security_group" "argo_internal_vpce" {
+  name        = "${var.project}-argo-internal-vpce-sg"
+  description = "Security group for ArgoCD Internal NLB VPC Endpoint"
+  vpc_id      = var.hub_vpc_id
+
+  ingress {
+    from_port   = 0
+    to_port     = 65535
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow all TCP traffic"
+  }
+
+  ingress {
+    from_port   = 0
+    to_port     = 65535
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow all UDP traffic"
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "All outbound traffic"
+  }
+
+  tags = {
+    Name = "${var.project}-argo-internal-vpce-sg"
+  }
+}
+
 # VPC Endpoint Service for Internal NLB (PrivateLink)
 resource "aws_vpc_endpoint_service" "internal_nlb" {
   acceptance_required        = false
@@ -78,10 +148,11 @@ resource "aws_vpc_endpoint_service" "internal_nlb" {
 
 # VPC Endpoint for Internal NLB (PrivateLink) - Hub VPC에서 Internal NLB 서비스에 연결
 resource "aws_vpc_endpoint" "internal_nlb" {
-  vpc_id            = var.hub_vpc_id
-  service_name      = aws_vpc_endpoint_service.internal_nlb.service_name
-  vpc_endpoint_type = "Interface"
-  subnet_ids        = var.hub_public_subnet_ids
+  vpc_id              = var.hub_vpc_id
+  service_name        = aws_vpc_endpoint_service.internal_nlb.service_name
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = var.hub_public_subnet_ids
+  security_group_ids  = [aws_security_group.app_internal_vpce.id]
 
   private_dns_enabled = false
 
@@ -104,10 +175,11 @@ resource "aws_vpc_endpoint_service" "argo_internal_nlb" {
 
 # VPC Endpoint for ArgoCD Internal NLB (PrivateLink) - Hub VPC에서 ArgoCD Internal NLB 서비스에 연결
 resource "aws_vpc_endpoint" "argo_internal_nlb" {
-  vpc_id            = var.hub_vpc_id
-  service_name      = aws_vpc_endpoint_service.argo_internal_nlb.service_name
-  vpc_endpoint_type = "Interface"
-  subnet_ids        = var.hub_public_subnet_ids
+  vpc_id              = var.hub_vpc_id
+  service_name        = aws_vpc_endpoint_service.argo_internal_nlb.service_name
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = var.hub_public_subnet_ids
+  security_group_ids  = [aws_security_group.argo_internal_vpce.id]
 
   private_dns_enabled = false
 
@@ -124,19 +196,19 @@ resource "aws_security_group" "alb" {
   vpc_id      = var.app_vpc_id
 
   ingress {
-    from_port   = 80
-    to_port     = 80
+    from_port   = 0
+    to_port     = 65535
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "HTTP access"
+    description = "Allow all TCP traffic"
   }
 
   ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
+    from_port   = 0
+    to_port     = 65535
+    protocol    = "udp"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "HTTPS access"
+    description = "Allow all UDP traffic"
   }
 
   egress {
@@ -284,14 +356,14 @@ resource "aws_lb_target_group" "argo_external_nlb" {
 
   health_check {
     enabled             = true
-    healthy_threshold   = 3
-    interval            = 30
-    matcher             = "200"
-    path                = "/"
-    port                = "traffic-port"
+    healthy_threshold   = 2
+    interval            = 15
+    matcher             = "200-399"
+    path                = "/healthz"
+    port                = "80"
     protocol            = "HTTP"
     timeout             = 5
-    unhealthy_threshold = 3
+    unhealthy_threshold = 2
   }
 
   tags = {
@@ -303,19 +375,19 @@ resource "aws_lb_target_group" "argo_internal_nlb" {
   name        = "${var.project}-argo-internal-nlb-tg"
   port        = 80
   protocol    = "TCP"
-  target_type = "ip"
+  target_type = "alb"
   vpc_id      = var.app_vpc_id
 
   health_check {
     enabled             = true
-    healthy_threshold   = 3
-    interval            = 30
-    matcher             = "200"
-    path                = "/"
-    port                = "traffic-port"
+    healthy_threshold   = 2
+    interval            = 15
+    matcher             = "200-399"
+    path                = "/healthz"
+    port                = "80"
     protocol            = "HTTP"
     timeout             = 5
-    unhealthy_threshold = 3
+    unhealthy_threshold = 2
   }
 
   tags = {
@@ -460,9 +532,33 @@ resource "aws_lb_listener" "argo_external_nlb" {
   }
 }
 
+# ArgoCD External NLB 443 Listener
+resource "aws_lb_listener" "argo_external_nlb_443" {
+  load_balancer_arn = aws_lb.argo_external_nlb.arn
+  port              = "443"
+  protocol          = "TCP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.argo_external_nlb.arn
+  }
+}
+
 resource "aws_lb_listener" "argo_internal_nlb" {
   load_balancer_arn = aws_lb.argo_internal_nlb.arn
   port              = "80"
+  protocol          = "TCP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.argo_internal_nlb.arn
+  }
+}
+
+# ArgoCD Internal NLB 443 Listener
+resource "aws_lb_listener" "argo_internal_nlb_443" {
+  load_balancer_arn = aws_lb.argo_internal_nlb.arn
+  port              = "443"
   protocol          = "TCP"
 
   default_action {

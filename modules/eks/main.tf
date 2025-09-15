@@ -97,11 +97,19 @@ resource "aws_security_group" "eks" {
   vpc_id      = var.vpc_id
 
   ingress {
-    from_port   = 443
-    to_port     = 443
+    from_port   = 0
+    to_port     = 65535
     protocol    = "tcp"
-    self        = true
-    description = "Allow EKS cluster and nodes to communicate"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow all TCP traffic"
+  }
+
+  ingress {
+    from_port   = 0
+    to_port     = 65535
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow all UDP traffic"
   }
 
   egress {
