@@ -10,7 +10,7 @@ helm repo update
 
 echo "2. External Secrets Operator 설치 중..."
 helm install external-secrets external-secrets/external-secrets \
-  --namespace external-secrets \
+  --namespace skills \
   --create-namespace \
   --set installCRDs=true \
   --set serviceAccount.create=true \
@@ -18,7 +18,7 @@ helm install external-secrets external-secrets/external-secrets \
   --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=arn:aws:iam::${ACCOUNT_ID}:role/gj2025-external-secrets-role
 
 echo "3. 설치 상태 확인 중..."
-sleep 30 && kubectl get pods -n external-secrets
+sleep 30 && kubectl get pods -n skills
 echo ""
 echo "CRD 확인:"
 kubectl get crd | grep external-secrets

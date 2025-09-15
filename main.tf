@@ -134,10 +134,11 @@ module "github_token" {
 module "iam" {
   source = "./modules/iam"
 
-  project      = var.project
-  account_id   = data.aws_caller_identity.current.account_id
-  oidc_provider = replace(module.eks.cluster_oidc_issuer_url, "https://", "")
-  secret_arns  = [
+  project         = var.project
+  account_id      = data.aws_caller_identity.current.account_id
+  oidc_provider   = replace(module.eks.cluster_oidc_issuer_url, "https://", "")
+  app_secrets_arn = module.app_secrets.secret_arn
+  secret_arns     = [
     module.app_secrets.secret_arn,
     module.github_token.secret_arn
   ]

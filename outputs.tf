@@ -103,3 +103,13 @@ output "external_secrets_role_name" {
   description = "External Secrets IAM role name"
   value       = module.iam.external_secrets_role_name
 }
+
+output "fluent_bit_role_arn" {
+  description = "FluentBit IAM role ARN"
+  value       = module.iam.fluent_bit_role_arn
+}
+
+output "fluent_bit_role_name" {
+  description = "FluentBit IAM role name"
+  value       = module.iam.fluent_bit_role_name
+}

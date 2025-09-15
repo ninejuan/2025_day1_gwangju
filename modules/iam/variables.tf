@@ -24,3 +24,8 @@ variable "kms_key_arns" {
   type        = list(string)
   default     = []
 }
+
+variable "app_secrets_arn" {
+  description = "App secrets ARN from Secrets Manager"
+  type        = string
+}
