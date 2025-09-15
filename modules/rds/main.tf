@@ -90,7 +90,7 @@ resource "aws_db_proxy" "main" {
   debug_logging          = false
   engine_family          = "MYSQL"
   idle_client_timeout    = 1800
-  require_tls            = true
+  require_tls            = false
   role_arn               = aws_iam_role.rds_proxy.arn
   vpc_security_group_ids = [aws_security_group.rds.id]
   vpc_subnet_ids         = var.private_subnet_ids
@@ -111,7 +111,7 @@ resource "aws_db_proxy_default_target_group" "main" {
 
   connection_pool_config {
     connection_borrow_timeout    = 120
-    init_query                   = "SET x=1"
+    init_query                   = "SELECT 1"
     max_connections_percent      = 100
     max_idle_connections_percent = 50
   }
@@ -154,9 +154,17 @@ resource "aws_iam_role_policy" "rds_proxy" {
       {
         Effect = "Allow"
         Action = [
-          "secretsmanager:GetSecretValue"
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
         ]
         Resource = aws_secretsmanager_secret.rds_proxy.arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt"
+        ]
+        Resource = aws_kms_key.rds.arn
       }
     ]
   })

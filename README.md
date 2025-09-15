@@ -21,6 +21,7 @@
 ## 주의사항
 - AWS ID가 하드코딩된 경우가 있음. 이 경우 오류나지 않도록 주의.
 - 무조건 Apply 전에 vsc search 돌릴 것.
+- 가끔 eks-cluster-sg-gj2025-eks-cluster-*에 hub vpc traffic allow 조건이 없는 경우가 있음. 이 때는 SG에서 hub vpc traffic 허용하면 됨.
 
 ## Docs
 ### D1. ALB Ingress Controller

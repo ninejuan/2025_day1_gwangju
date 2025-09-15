@@ -4,7 +4,7 @@ metadata:
   name: red-tgb
   namespace: skills
 spec:
-  targetGroupARN: arn:aws:elasticloadbalancing:ap-northeast-2:571480186401:targetgroup/gj2025-app-red-tg/17015b553e21fe07
+  targetGroupARN: arn:aws:elasticloadbalancing:ap-northeast-2:571480186401:targetgroup/gj2025-app-red-tg/76d81bfe34496332
   targetType: ip
   serviceRef:
     name: red-service
@@ -16,7 +16,7 @@ metadata:
   name: green-tgb
   namespace: skills
 spec:
-  targetGroupARN: arn:aws:elasticloadbalancing:ap-northeast-2:571480186401:targetgroup/gj2025-app-green-tg/bd289eac89c48b60
+  targetGroupARN: arn:aws:elasticloadbalancing:ap-northeast-2:571480186401:targetgroup/gj2025-app-green-tg/112d0a10df8daf6c
   targetType: ip
   serviceRef:
     name: green-service
