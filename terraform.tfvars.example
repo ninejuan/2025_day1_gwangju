@@ -1,0 +1,6 @@
+aws_region      = "ap-northeast-2"
+project         = "gj2025"
+environment     = "prod"
+github_token    = "ghp_******"
+github_username = "24sunrin015"
+repository_id   = "gj2025-repository"
