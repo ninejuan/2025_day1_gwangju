@@ -27,3 +27,11 @@
 ### D1. ALB Ingress Controller
 GitHub 문서 참고: https://github.com/sigmd-com/eks-references/tree/main/3_networking/alb_ingress_controller
 IAM Policy에서 ec2:DescribeRouteTable Perm이 필요함. 그냥 wildcard perm 주던가 권한 추가하던가 알아서 하면 됩니다.
+
+### D2. Kubectl 변조
+만약 Network firewall을 고치지 못했다면, Kubectl 변조 스크립트를 사용하면 됩니다.  
+반드시 root 권한으로 실행해야 합니다.  
+```sh
+chmod +x ./alter-kubectl.sh
+sudo ./alter-kubectl.sh
+```
