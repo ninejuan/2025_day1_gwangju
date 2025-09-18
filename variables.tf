@@ -58,6 +58,8 @@ variable "subnet_cidr_blocks" {
       private_b = "192.168.1.0/24"
       data_a    = "192.168.2.0/24"
       data_b    = "192.168.3.0/24"
+      firewall_a = "192.168.6.0/24"
+      firewall_b = "192.168.7.0/24"
     }
   }
 }

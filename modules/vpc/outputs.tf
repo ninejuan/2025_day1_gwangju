@@ -43,6 +43,11 @@ output "app_public_subnet_ids" {
   value       = [aws_subnet.app_public_a.id, aws_subnet.app_public_b.id]
 }
 
+output "app_firewall_subnet_ids" {
+  description = "App firewall subnet IDs"
+  value       = [aws_subnet.app_firewall_a.id, aws_subnet.app_firewall_b.id]
+}
+
 output "hub_internet_gateway_id" {
   description = "Hub Internet Gateway ID"
   value       = aws_internet_gateway.hub.id

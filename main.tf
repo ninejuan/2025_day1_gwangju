@@ -51,6 +51,8 @@ module "network_firewall" {
   vpc_id             = module.vpc.hub_vpc_id
   firewall_subnet_id = module.vpc.hub_firewall_subnet_id
   availability_zones = var.availability_zones
+  app_vpc_id             = module.vpc.app_vpc_id
+  app_firewall_subnet_ids = module.vpc.app_firewall_subnet_ids
 }
 
 module "bastion" {

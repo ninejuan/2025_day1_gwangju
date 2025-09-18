@@ -12,11 +12,8 @@ resource "aws_networkfirewall_rule_group" "suricata_rules" {
 pass ip 10.0.0.0/16 any -> any any (msg:"Allow Bastion traffic"; sid:1001;)
 
 # Block ifconfig.io HTTP/HTTPS requests from App VPC
-drop http 192.168.0.0/16 any -> any any (msg:"Block ifconfig.io HTTP"; content:"Host"; http_header; content:"ifconfig.io"; nocase; sid:2001;)
-drop tls 192.168.0.0/16 any -> any any (msg:"Block ifconfig.io HTTPS"; tls.sni; content:"ifconfig.io"; nocase; sid:2002;)
-
-# Default rule - allow all other traffic
-pass ip any any -> any any (msg:"Default allow"; sid:9999;)
+drop http 192.168.0.0/16 any -> any any (msg:"Block ifconfig.io HTTP"; http.host; content:"ifconfig.io"; nocase; sid:2001;)
+drop tls 192.168.0.0/16 any -> any any (msg:"Block ifconfig.io HTTPS"; tls_sni; content:"ifconfig.io"; nocase; sid:2002;)
 EOF
     }
   }
@@ -32,6 +29,10 @@ resource "aws_networkfirewall_firewall_policy" "main" {
   firewall_policy {
     stateless_default_actions          = ["aws:forward_to_sfe"]
     stateless_fragment_default_actions = ["aws:forward_to_sfe"]
+
+    stateful_engine_options {
+      rule_order = "STRICT_ORDER"
+    }
 
     stateful_rule_group_reference {
       resource_arn = aws_networkfirewall_rule_group.suricata_rules.arn
@@ -125,3 +126,81 @@ resource "aws_networkfirewall_logging_configuration" "main" {
     }
   }
 } 
+
+### ------------------------------------------------------------
+### App VPC Network Firewall
+### ------------------------------------------------------------
+resource "aws_networkfirewall_rule_group" "app_suricata_rules" {
+  capacity = 100
+  name     = "${var.project}-appvpc-nfw-rule"
+  type     = "STATEFUL"
+
+  rule_group {
+    rules_source {
+      rules_string = <<EOF
+# Allow all traffic for Bastion (from Hub VPC)
+pass ip 10.0.0.0/16 any -> any any (msg:"Allow Bastion traffic"; sid:1001;)
+
+# Block ifconfig.io HTTP/HTTPS requests from App VPC
+drop http 192.168.0.0/16 any -> any any (msg:"Block ifconfig.io HTTP"; http.host; content:"ifconfig.io"; nocase; sid:2001;)
+drop tls 192.168.0.0/16 any -> any any (msg:"Block ifconfig.io HTTPS"; tls_sni; content:"ifconfig.io"; nocase; sid:2002;)
+EOF
+    }
+  }
+
+  tags = {
+    Name = "${var.project}-appvpc-nfw-rule"
+  }
+}
+
+resource "aws_networkfirewall_firewall_policy" "app" {
+  name = "${var.project}-appvpc-nfw-policy"
+
+  firewall_policy {
+    stateless_default_actions          = ["aws:forward_to_sfe"]
+    stateless_fragment_default_actions = ["aws:forward_to_sfe"]
+
+    stateful_engine_options {
+      rule_order = "STRICT_ORDER"
+    }
+
+    stateful_rule_group_reference {
+      resource_arn = aws_networkfirewall_rule_group.app_suricata_rules.arn
+    }
+  }
+
+  tags = {
+    Name = "${var.project}-appvpc-nfw-policy"
+  }
+}
+
+resource "aws_networkfirewall_firewall" "app" {
+  name                = "${var.project}-appvpc-nfw"
+  firewall_policy_arn = aws_networkfirewall_firewall_policy.app.arn
+  vpc_id              = var.app_vpc_id
+
+  dynamic "subnet_mapping" {
+    for_each = var.app_firewall_subnet_ids
+    content {
+      subnet_id = subnet_mapping.value
+    }
+  }
+
+  tags = {
+    Name = "${var.project}-appvpc-nfw"
+  }
+}
+
+resource "aws_networkfirewall_logging_configuration" "app" {
+  firewall_arn = aws_networkfirewall_firewall.app.arn
+
+  logging_configuration {
+    log_destination_config {
+      log_destination = {
+        logGroup = aws_cloudwatch_log_group.firewall.name
+      }
+      log_destination_type = "CloudWatchLogs"
+      log_type             = "FLOW"
+    }
+  }
+}

@@ -178,6 +178,28 @@ resource "aws_subnet" "app_data_b" {
   }
 }
 
+resource "aws_subnet" "app_firewall_a" {
+  vpc_id            = aws_vpc.app.id
+  cidr_block        = var.subnet_cidr_blocks.app.firewall_a
+  availability_zone = var.availability_zones[0]
+
+  tags = {
+    Name = "${var.project}-app-firewall-subnet-a"
+    Type = "Firewall"
+  }
+}
+
+resource "aws_subnet" "app_firewall_b" {
+  vpc_id            = aws_vpc.app.id
+  cidr_block        = var.subnet_cidr_blocks.app.firewall_b
+  availability_zone = var.availability_zones[1]
+
+  tags = {
+    Name = "${var.project}-app-firewall-subnet-b"
+    Type = "Firewall"
+  }
+}
+
 resource "aws_route_table" "hub_public" {
   vpc_id = aws_vpc.hub.id
 
