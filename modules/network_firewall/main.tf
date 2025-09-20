@@ -31,12 +31,11 @@ resource "aws_networkfirewall_firewall_policy" "main" {
     stateless_fragment_default_actions = ["aws:forward_to_sfe"]
 
     stateful_engine_options {
-      rule_order = "STRICT_ORDER"
+      rule_order = "DEFAULT_ACTION_ORDER"
     }
 
     stateful_rule_group_reference {
       resource_arn = aws_networkfirewall_rule_group.suricata_rules.arn
-      priority     = 1
     }
   }
 
@@ -162,12 +161,11 @@ resource "aws_networkfirewall_firewall_policy" "app" {
     stateless_fragment_default_actions = ["aws:forward_to_sfe"]
 
     stateful_engine_options {
-      rule_order = "STRICT_ORDER"
+      rule_order = "DEFAULT_ACTION_ORDER"
     }
 
     stateful_rule_group_reference {
       resource_arn = aws_networkfirewall_rule_group.app_suricata_rules.arn
-      priority     = 1
     }
   }
 
