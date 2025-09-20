@@ -36,6 +36,7 @@ resource "aws_networkfirewall_firewall_policy" "main" {
 
     stateful_rule_group_reference {
       resource_arn = aws_networkfirewall_rule_group.suricata_rules.arn
+      priority     = 1
     }
   }
 
@@ -166,6 +167,7 @@ resource "aws_networkfirewall_firewall_policy" "app" {
 
     stateful_rule_group_reference {
       resource_arn = aws_networkfirewall_rule_group.app_suricata_rules.arn
+      priority     = 1
     }
   }
 
