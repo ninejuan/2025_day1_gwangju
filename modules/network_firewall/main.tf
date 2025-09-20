@@ -12,8 +12,8 @@ resource "aws_networkfirewall_rule_group" "suricata_rules" {
 pass ip 10.0.0.0/16 any -> any any (msg:"Allow Bastion traffic"; sid:1001;)
 
 # Block ifconfig.io HTTP/HTTPS requests from App VPC
-drop http 192.168.0.0/16 any -> any any (msg:"Block ifconfig.io HTTP"; http.host; content:"ifconfig.io"; nocase; sid:2001;)
-drop tls 192.168.0.0/16 any -> any any (msg:"Block ifconfig.io HTTPS"; tls_sni; content:"ifconfig.io"; nocase; sid:2002;)
+drop http 192.168.0.0/16 any -> any any (msg:"Block ifconfig.io HTTP"; http.host; content:"ifconfig.io"; sid:2001;)
+drop tls 192.168.0.0/16 any -> any any (msg:"Block ifconfig.io HTTPS"; tls_sni; content:"ifconfig.io"; sid:2002;)
 EOF
     }
   }
@@ -142,8 +142,8 @@ resource "aws_networkfirewall_rule_group" "app_suricata_rules" {
 pass ip 10.0.0.0/16 any -> any any (msg:"Allow Bastion traffic"; sid:1001;)
 
 # Block ifconfig.io HTTP/HTTPS requests from App VPC
-drop http 192.168.0.0/16 any -> any any (msg:"Block ifconfig.io HTTP"; http.host; content:"ifconfig.io"; nocase; sid:2001;)
-drop tls 192.168.0.0/16 any -> any any (msg:"Block ifconfig.io HTTPS"; tls_sni; content:"ifconfig.io"; nocase; sid:2002;)
+drop http 192.168.0.0/16 any -> any any (msg:"Block ifconfig.io HTTP"; http.host; content:"ifconfig.io"; sid:2001;)
+drop tls 192.168.0.0/16 any -> any any (msg:"Block ifconfig.io HTTPS"; tls_sni; content:"ifconfig.io"; sid:2002;)
 EOF
     }
   }
